@@ -1,0 +1,10 @@
+`verilator_config
+
+// UVM uvm_pkg
+lint_off -rule SYMRSVDWORD -file "*ip/uvm/src/*"
+lint_off -rule CONSTRAINTIGN -file "*ip/uvm/src/*"
+lint_off -rule IGNOREDRETURN -file "*ip/uvm/src/*"
+lint_off -file "*ip/uvm/src/*"
+
+// UVM Macros
+lint_off -rule WIDTHTRUNC -file "*" -match "*uvm_report_enabled*"
