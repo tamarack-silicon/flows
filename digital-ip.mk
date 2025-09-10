@@ -171,18 +171,18 @@ csr: csr-rtl csr-ral csr-doc
 # Generate CSR block RTL
 .PHONY: csr-rtl
 csr-rtl:
-	peakrdl regblock csr/$(CSR_BLOCK_NAME).rdl -o rtl/ --cpuif apb4-flat
+	peakrdl regblock csr/$(CSR_BLOCK_NAME).rdl -o rtl/ --cpuif apb4-flat --peakrdl-cfg ip/flows/peakrdl/peakrdl.toml
 
 # Generate CSR UVM RAL model
 .PHONY: csr-ral
 csr-ral:
-	peakrdl uvm csr/$(CSR_BLOCK_NAME).rdl -o verif/$(CSR_BLOCK_NAME)_ral_pkg.sv
+	peakrdl uvm csr/$(CSR_BLOCK_NAME).rdl -o verif/$(CSR_BLOCK_NAME)_ral_pkg.sv --peakrdl-cfg ip/flows/peakrdl/peakrdl.toml
 
 # Generate CSR reStructuredText Documentation
 .PHONY: csr-doc
 csr-doc:
 	mkdir -p sim
-	peakrdl html csr/$(CSR_BLOCK_NAME).rdl -o doc/
+	peakrdl html csr/$(CSR_BLOCK_NAME).rdl -o doc/ --peakrdl-cfg ip/flows/peakrdl/peakrdl.toml
 
 # Synthesis
 ifeq ($(SYNTH_TOOL), yosys)
