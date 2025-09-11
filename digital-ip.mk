@@ -144,7 +144,7 @@ run-verif-sim: sim/verif_obj_dir/V$(VERIF_TOP_NAME)
 .PHONY: run-test
 run-test: sim/verif_obj_dir/V$(VERIF_TOP_NAME)
 	mkdir -p sim/$(TEST)
-	cd sim/$(TEST) ; ../verif_obj_dir/V$(VERIF_TOP_NAME) +UVM_TESTNAME=$(TEST) $(SIM_ARGS)
+	cd sim ; ./verif_obj_dir/V$(VERIF_TOP_NAME) +UVM_TESTNAME=$(TEST) $(SIM_ARGS)
 
 else ifeq ($(SIMULATOR), iverilog)
 sim/icarus_$(TB_NAME): rtl_filelist.f
