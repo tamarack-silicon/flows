@@ -219,4 +219,5 @@ deliverable: csr-ipxact csr-c-header deliverable/micro-architecture-specificatio
 # Clean
 .PHONY: clean
 clean:
-	rm -rf sim/* netlist/* deliverable/* *.f
+	$(MAKE) -C doc/micro_architecture_specification clean
+	rm -rf sim/* netlist/* deliverable/* *.f abc.history
