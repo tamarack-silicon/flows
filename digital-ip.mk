@@ -159,7 +159,7 @@ formal:
 
 # CSR
 .PHONY: csr
-csr: csr-rtl csr-ral
+csr: csr-rtl csr-ral csr-ipxact csr-c-header
 
 # Generate CSR block RTL
 .PHONY: csr-rtl
@@ -170,6 +170,18 @@ csr-rtl:
 .PHONY: csr-ral
 csr-ral:
 	$(PEAKRDL) uvm csr/$(CSR_BLOCK_NAME).rdl -o verif/$(CSR_BLOCK_NAME)_ral_pkg.sv --peakrdl-cfg ip/flows/peakrdl/peakrdl.toml
+
+# Generate CSR IP-XACT file
+.PHONY: csr-ipxact
+csr-ipxact:
+	mkdir -p deliverable
+	$(PEAKRDL) ip-xact csr/$(CSR_BLOCK_NAME).rdl -o deliverable/$(CSR_BLOCK_NAME).xml --peakrdl-cfg ip/flows/peakrdl/peakrdl.toml
+
+# Generate CSR C header file
+.PHONY: csr-c-header
+csr-c-header:
+	mkdir -p deliverable
+	$(PEAKRDL) c-header csr/$(CSR_BLOCK_NAME).rdl -o deliverable/$(CSR_BLOCK_NAME).h --peakrdl-cfg ip/flows/peakrdl/peakrdl.toml
 
 # Synthesis
 ifeq ($(SYNTH_TOOL), yosys)
@@ -195,7 +207,16 @@ synth:
 
 endif
 
+# Micro-Architecture Specification documentation
+deliverable/micro-architecture-specification.pdf:
+	$(MAKE) -C doc/micro_architecture_specification latexpdf
+	cp doc/micro_architecture_specification/_build/latex/*.pdf deliverable/micro-architecture-specification.pdf
+
+# Generate IP deliverables
+.PHONY: deliverable
+deliverable: csr-ipxact csr-c-header deliverable/micro-architecture-specification.pdf
+
 # Clean
 .PHONY: clean
 clean:
-	rm -rf sim/* netlist/* *.f
+	rm -rf sim/* netlist/* deliverable/* *.f
