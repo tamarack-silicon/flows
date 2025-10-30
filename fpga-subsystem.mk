@@ -76,15 +76,15 @@ ifeq ($(LINTER), verilator)
 # Lint with Verilator
 .PHONY: lint-rtl
 lint-rtl:
-	$(VERILATOR) --lint-only $(VL_RTL_LINT_ARGS) lint/waviers.vlt $(RTL_FLIST_ARG) --top $(RTL_TOP_NAME)
+	$(VERILATOR) --lint-only $(VL_RTL_LINT_ARGS) lint/waiver.vlt $(RTL_FLIST_ARG) --top $(RTL_TOP_NAME)
 
 .PHONY: lint-tb
 lint-tb:
-	$(VERILATOR) --lint-only $(VL_TB_LINT_ARGS) lint/waviers.vlt $(RTL_FLIST_ARG) $(TB_FILE) --top $(TB_NAME)
+	$(VERILATOR) --lint-only $(VL_TB_LINT_ARGS) lint/waiver.vlt $(RTL_FLIST_ARG) $(TB_FILE) --top $(TB_NAME)
 
 .PHONY: lint-verif
 lint-verif:
-	$(VERILATOR) --lint-only $(VL_VERIF_LINT_ARGS) lint/waviers.vlt $(UVM_PKG_ARGS) $(RTL_FLIST_ARG) $(VERIF_FLIST_ARG) --top $(VERIF_TOP_NAME)
+	$(VERILATOR) --lint-only $(VL_VERIF_LINT_ARGS) lint/waiver.vlt $(UVM_PKG_ARGS) $(RTL_FLIST_ARG) $(VERIF_FLIST_ARG) --top $(VERIF_TOP_NAME)
 
 else ifeq ($(LINTER), slang)
 
