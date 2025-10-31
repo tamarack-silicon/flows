@@ -79,22 +79,22 @@ ifeq ($(LINTER), verilator)
 # Lint with Verilator
 .PHONY: lint-rtl
 lint-rtl:
-	$(VERILATOR) --lint-only $(VL_RTL_LINT_ARGS) $(STDCELL_SRAM_BEHAV_VERILOG) $(RTL_FLIST_ARG) --top $(RTL_TOP_NAME)
+	$(VERILATOR) --lint-only $(VL_RTL_LINT_ARGS) lint/waiver.vlt $(STDCELL_SRAM_BEHAV_VERILOG) $(RTL_FLIST_ARG) --top $(RTL_TOP_NAME)
 
 .PHONY: lint-tb
 lint-tb:
-	$(VERILATOR) --lint-only $(VL_TB_LINT_ARGS) $(STDCELL_SRAM_BEHAV_VERILOG) $(RTL_FLIST_ARG) $(TB_FILE) --top $(TB_NAME)
+	$(VERILATOR) --lint-only $(VL_TB_LINT_ARGS) lint/waiver.vlt $(STDCELL_SRAM_BEHAV_VERILOG) $(RTL_FLIST_ARG) $(TB_FILE) --top $(TB_NAME)
 
 .PHONY: lint-verif
 lint-verif:
-	$(VERILATOR) --lint-only $(VL_VERIF_LINT_ARGS) $(STDCELL_SRAM_BEHAV_VERILOG) $(UVM_PKG_ARGS) $(RTL_FLIST_ARG) $(VERIF_FLIST_ARG) --top $(VERIF_TOP_NAME)
+	$(VERILATOR) --lint-only $(VL_VERIF_LINT_ARGS) lint/waiver.vlt $(STDCELL_SRAM_BEHAV_VERILOG) $(UVM_PKG_ARGS) $(RTL_FLIST_ARG) $(VERIF_FLIST_ARG) --top $(VERIF_TOP_NAME)
 
 else ifeq ($(LINTER), slang)
 
 # Lint with Slang
 .PHONY: lint-rtl
 lint-rtl:
-	$(SLANG) $(SLANG_RTL_LINT_ARGS) $(STDCELL_SRAM_BEHAV_VERILOG) --top $(RTL_TOP_NAME)
+	$(SLANG) $(SLANG_RTL_LINT_ARGS) $(STDCELL_SRAM_BEHAV_VERILOG) $(RTL_FLIST_ARG) --top $(RTL_TOP_NAME)
 
 .PHONY: lint-tb
 lint-tb:
@@ -162,7 +162,7 @@ formal:
 
 # CSR
 .PHONY: csr
-csr: csr-rtl csr-ral
+csr: csr-rtl csr-ral csr-ipxact csr-c-header
 
 # Generate CSR block RTL
 .PHONY: csr-rtl
@@ -173,6 +173,18 @@ csr-rtl:
 .PHONY: csr-ral
 csr-ral:
 	$(PEAKRDL) uvm csr/$(CSR_BLOCK_NAME).rdl -o verif/$(CSR_BLOCK_NAME)_ral_pkg.sv --peakrdl-cfg ip/flows/peakrdl/peakrdl.toml
+
+# Generate CSR IP-XACT file
+.PHONY: csr-ipxact
+csr-ipxact:
+	mkdir -p deliverable
+	$(PEAKRDL) ip-xact csr/$(CSR_BLOCK_NAME).rdl -o deliverable/$(CSR_BLOCK_NAME).xml --peakrdl-cfg ip/flows/peakrdl/peakrdl.toml
+
+# Generate CSR C header file
+.PHONY: csr-c-header
+csr-c-header:
+	mkdir -p deliverable
+	$(PEAKRDL) c-header csr/$(CSR_BLOCK_NAME).rdl -o deliverable/$(CSR_BLOCK_NAME).h --peakrdl-cfg ip/flows/peakrdl/peakrdl.toml
 
 # Synthesis
 YOSYS_READ_SRAM_LIBERTY_CMD := $(foreach lib, $(SRAM_LIBERTY), $(addprefix read_liberty -ignore_miss_func -lib , $(addsuffix ; , $(lib))))
@@ -200,7 +212,17 @@ synth:
 
 endif
 
+# Micro-Architecture Specification documentation
+deliverable/micro-architecture-specification.pdf:
+	$(MAKE) -C doc/micro_architecture_specification latexpdf
+	cp doc/micro_architecture_specification/_build/latex/*.pdf deliverable/micro-architecture-specification.pdf
+
+# Generate IP deliverables
+.PHONY: deliverable
+deliverable: csr-ipxact csr-c-header deliverable/micro-architecture-specification.pdf
+
 # Clean
 .PHONY: clean
 clean:
-	rm -rf sim/* netlist/* *.f
+	$(MAKE) -C doc/micro_architecture_specification clean
+	rm -rf sim/* netlist/* deliverable/* *.f abc.history
