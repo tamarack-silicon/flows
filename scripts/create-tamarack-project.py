@@ -47,7 +47,7 @@ def main() -> int:
 	os.mkdir(project_dir + '/ip')
 	os.mkdir(project_dir + '/lint')
 	os.mkdir(project_dir + '/rtl')
-	os.mkdir(project_dir + '/syn')
+	os.mkdir(project_dir + '/synth')
 	os.mkdir(project_dir + '/tb')
 	os.mkdir(project_dir + '/verif')
 
