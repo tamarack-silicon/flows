@@ -155,7 +155,10 @@ endif
 # Formal property verification
 .PHONY: formal
 formal:
-	echo "SVA Formal Verification not available"
+	cp ip/flows/symbiyosys/symbiyosys.sby.template symbiyosys.sby
+	echo "read_slang -D FORMAL $(RTL_FLIST_ARG)" | sed -e 's/-F /-F ..\/..\//g' >> symbiyosys.sby
+	echo "prep -top $(RTL_TOP_NAME)" >> symbiyosys.sby
+	sby -f symbiyosys.sby
 
 # CSR
 .PHONY: csr
@@ -220,4 +223,4 @@ deliverable: csr-ipxact csr-c-header deliverable/micro-architecture-specificatio
 .PHONY: clean
 clean:
 	$(MAKE) -C doc/micro_architecture_specification clean
-	rm -rf sim/* netlist/* deliverable/* *.f abc.history
+	rm -rf sim/* netlist/* deliverable/* *.f abc.history symbiyosys*

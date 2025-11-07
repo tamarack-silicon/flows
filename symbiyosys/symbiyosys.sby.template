@@ -1,0 +1,15 @@
+[tasks]
+bmc
+prove
+cover
+
+[options]
+cover: mode cover
+prove: mode prove
+bmc: mode bmc
+
+[engines]
+smtbmc z3
+
+[script]
+plugin -i slang
