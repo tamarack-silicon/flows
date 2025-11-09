@@ -72,6 +72,9 @@ include ip/flows/tech/$(ASIC_TECH).mk
 
 export STDCELL_LIBERTY
 export SRAM_LIBERTY
+export TECH_LEF
+export STDCELL_LEF
+export SRAM_LEF
 export RTL_TOP_NAME
 export NETLIST_FILE
 
@@ -223,6 +226,21 @@ synth: $(NETLIST_FILE)
 .PHONY: sta-zwl
 sta-zwl: $(NETLIST_FILE)
 	sta -no_init -exit ip/flows/opensta/opensta.tcl
+
+# ASIC implementation (Netlist-to-GDS)
+ifeq ($(GUI), 1)
+
+.PHONY: impl
+impl: $(NETLIST_FILE)
+	openroad -no_init -gui ip/flows/openroad/openroad.tcl
+
+else
+
+.PHONY: impl
+impl: $(NETLIST_FILE)
+	openroad -no_init -exit ip/flows/openroad/openroad.tcl
+
+endif
 
 # Micro-Architecture Specification documentation
 deliverable/micro-architecture-specification.pdf:

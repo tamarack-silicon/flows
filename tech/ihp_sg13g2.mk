@@ -34,3 +34,21 @@ SRAM_LIBERTY := \
 HI_CELL_NAME_AND_PORT := sg13g2_tiehi L_HI
 
 LO_CELL_NAME_AND_PORT := sg13g2_tielo L_LO
+
+TECH_LEF := $(PDK_PATH)/ihp-sg13g2/libs.ref/sg13g2_stdcell/lef/sg13g2_tech.lef
+
+STDCELL_LEF := $(PDK_PATH)/ihp-sg13g2/libs.ref/sg13g2_stdcell/lef/sg13g2_stdcell.lef
+
+SRAM_LEF := \
+	$(PDK_PATH)/ihp-sg13g2/libs.ref/sg13g2_sram/lef/RM_IHPSG13_1P_1024x16_c2_bm_bist.lef \
+	$(PDK_PATH)/ihp-sg13g2/libs.ref/sg13g2_sram/lef/RM_IHPSG13_1P_1024x64_c2_bm_bist.lef \
+	$(PDK_PATH)/ihp-sg13g2/libs.ref/sg13g2_sram/lef/RM_IHPSG13_1P_1024x8_c2_bm_bist.lef \
+	$(PDK_PATH)/ihp-sg13g2/libs.ref/sg13g2_sram/lef/RM_IHPSG13_1P_2048x64_c2_bm_bist.lef \
+	$(PDK_PATH)/ihp-sg13g2/libs.ref/sg13g2_sram/lef/RM_IHPSG13_1P_256x48_c2_bm_bist.lef \
+	$(PDK_PATH)/ihp-sg13g2/libs.ref/sg13g2_sram/lef/RM_IHPSG13_1P_256x64_c2_bm_bist.lef \
+	$(PDK_PATH)/ihp-sg13g2/libs.ref/sg13g2_sram/lef/RM_IHPSG13_1P_4096x16_c3_bm_bist.lef \
+	$(PDK_PATH)/ihp-sg13g2/libs.ref/sg13g2_sram/lef/RM_IHPSG13_1P_4096x8_c3_bm_bist.lef \
+	$(PDK_PATH)/ihp-sg13g2/libs.ref/sg13g2_sram/lef/RM_IHPSG13_1P_512x32_c2_bm_bist.lef \
+	$(PDK_PATH)/ihp-sg13g2/libs.ref/sg13g2_sram/lef/RM_IHPSG13_1P_512x64_c2_bm_bist.lef \
+	$(PDK_PATH)/ihp-sg13g2/libs.ref/sg13g2_sram/lef/RM_IHPSG13_1P_64x64_c2_bm_bist.lef \
+	$(PDK_PATH)/ihp-sg13g2/libs.ref/sg13g2_sram/lef/RM_IHPSG13_2P_64x32_c2.lef
