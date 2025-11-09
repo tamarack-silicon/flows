@@ -64,6 +64,7 @@ VERIF_FLIST_ARG := $(VERIF_FLIST_IP_ARG) $(VERIF_FLIST_REPO_ARG) -F verif/source
 
 # Testbench file
 TB_FILE := tb/$(TB_NAME).sv
+NETLIST_FILE := netlist/$(RTL_TOP_NAME).netlist.v
 
 rtl_filelist.f:
 	$(dir $(lastword $(MAKEFILE_LIST)))/scripts/filelist.py $(RTL_FLIST_ARG) > rtl_filelist.f
@@ -187,28 +188,12 @@ csr-c-header:
 	$(PEAKRDL) c-header csr/$(CSR_BLOCK_NAME).rdl -o deliverable/$(CSR_BLOCK_NAME).h --peakrdl-cfg ip/flows/peakrdl/peakrdl.toml
 
 # Synthesis
-ifeq ($(SYNTH_TOOL), yosys)
-
-.PHONY: synth
-synth:
-	mkdir -p netlist
-	$(YOSYS) -p "read_verilog_file_list $(RTL_FLIST_ARG); synth -top $(RTL_TOP_NAME) -flatten; write_verilog netlist/$(RTL_TOP_NAME).netlist.v"
-
-else ifeq ($(SYNTH_TOOL), yosys-surelog)
-
-.PHONY: synth
-synth: rtl_filelist.f
-	mkdir -p netlist
-	$(YOSYS) -m systemverilog -p "read_systemverilog -f rtl_filelist.f; synth -top $(RTL_TOP_NAME) -flatten; write_verilog netlist/$(RTL_TOP_NAME).netlist.v"
-
-else ifeq ($(SYNTH_TOOL), yosys-slang)
-
-.PHONY: synth
-synth:
+$(NETLIST_FILE):
 	mkdir -p netlist
 	$(YOSYS) -m slang -p "read_slang -Weverything --top $(RTL_TOP_NAME) +define+SYNTHESIS $(RTL_FLIST_ARG); synth -top $(RTL_TOP_NAME) -flatten; write_verilog netlist/$(RTL_TOP_NAME).netlist.v"
 
-endif
+.PHONY: synth
+synth: $(NETLIST_FILE)
 
 # Micro-Architecture Specification documentation
 deliverable/micro-architecture-specification.pdf:

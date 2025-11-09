@@ -64,7 +64,6 @@ VERIF_FLIST_ARG := $(VERIF_FLIST_IP_ARG) $(VERIF_FLIST_REPO_ARG) -F verif/source
 
 # Testbench file
 TB_FILE := tb/$(TB_NAME).sv
-
 NETLIST_FILE := netlist/$(RTL_TOP_NAME).netlist.v
 
 # Include ASIC technology-specific makefile
@@ -168,7 +167,10 @@ endif
 # Formal property verification
 .PHONY: formal
 formal:
-	echo "SVA Formal Verification not available"
+	cp ip/flows/symbiyosys/symbiyosys.sby.template symbiyosys.sby
+	echo "read_slang -D FORMAL $(RTL_FLIST_ARG)" | sed -e 's/-F /-F ..\/..\//g' >> symbiyosys.sby
+	echo "prep -top $(RTL_TOP_NAME)" >> symbiyosys.sby
+	sby -f symbiyosys.sby
 
 # CSR
 .PHONY: csr
@@ -199,25 +201,9 @@ csr-c-header:
 # Synthesis
 YOSYS_READ_SRAM_LIBERTY_CMD := $(foreach lib, $(SRAM_LIBERTY), $(addprefix read_liberty -ignore_miss_func -lib , $(addsuffix ; , $(lib))))
 
-ifeq ($(SYNTH_TOOL), yosys)
-
-$(NETLIST_FILE):
-	mkdir -p netlist
-	$(YOSYS) -p "read_liberty -ignore_miss_func -lib $(STDCELL_LIBERTY); $(YOSYS_READ_SRAM_LIBERTY_CMD) read_verilog_file_list $(RTL_FLIST_ARG); synth -top $(RTL_TOP_NAME) -flatten; dfflibmap -liberty $(STDCELL_LIBERTY); abc -liberty $(STDCELL_LIBERTY); hilomap -singleton -hicell $(HI_CELL_NAME_AND_PORT) -locell $(LO_CELL_NAME_AND_PORT); clean; stat; write_verilog -nohex -nodec $(NETLIST_FILE)"
-
-else ifeq ($(SYNTH_TOOL), yosys-surelog)
-
-$(NETLIST_FILE): rtl_filelist.f
-	mkdir -p netlist
-	$(YOSYS) -m systemverilog -p "read_liberty -ignore_miss_func -lib $(STDCELL_LIBERTY); $(YOSYS_READ_SRAM_LIBERTY_CMD) read_systemverilog -f rtl_filelist.f; synth -top $(RTL_TOP_NAME) -flatten; dfflibmap -liberty $(STDCELL_LIBERTY); abc -liberty $(STDCELL_LIBERTY); hilomap -singleton -hicell $(HI_CELL_NAME_AND_PORT) -locell $(LO_CELL_NAME_AND_PORT); clean; stat; write_verilog -nohex -nodec $(NETLIST_FILE)"
-
-else ifeq ($(SYNTH_TOOL), yosys-slang)
-
 $(NETLIST_FILE):
 	mkdir -p netlist
 	$(YOSYS) -m slang -p "read_liberty -ignore_miss_func -lib $(STDCELL_LIBERTY); $(YOSYS_READ_SRAM_LIBERTY_CMD) read_slang -Weverything --top $(RTL_TOP_NAME) +define+SYNTHESIS $(RTL_FLIST_ARG); synth -top $(RTL_TOP_NAME) -flatten; dfflibmap -liberty $(STDCELL_LIBERTY); abc -liberty $(STDCELL_LIBERTY); hilomap -singleton -hicell $(HI_CELL_NAME_AND_PORT) -locell $(LO_CELL_NAME_AND_PORT); clean; stat; write_verilog -nohex -nodec $(NETLIST_FILE)"
-
-endif
 
 .PHONY: synth
 synth: $(NETLIST_FILE)
@@ -255,4 +241,4 @@ deliverable: csr-ipxact csr-c-header deliverable/micro-architecture-specificatio
 .PHONY: clean
 clean:
 	$(MAKE) -C doc/micro_architecture_specification clean
-	rm -rf sim/* netlist/* deliverable/* *.f abc.history
+	rm -rf sim/* netlist/* deliverable/* *.f abc.history symbiyosys*
