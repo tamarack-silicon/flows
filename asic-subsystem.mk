@@ -65,8 +65,15 @@ VERIF_FLIST_ARG := $(VERIF_FLIST_IP_ARG) $(VERIF_FLIST_REPO_ARG) -F verif/source
 # Testbench file
 TB_FILE := tb/$(TB_NAME).sv
 
+NETLIST_FILE := netlist/$(RTL_TOP_NAME).netlist.v
+
 # Include ASIC technology-specific makefile
 include ip/flows/tech/$(ASIC_TECH).mk
+
+export STDCELL_LIBERTY
+export SRAM_LIBERTY
+export RTL_TOP_NAME
+export NETLIST_FILE
 
 rtl_filelist.f:
 	$(dir $(lastword $(MAKEFILE_LIST)))/scripts/filelist.py $(RTL_FLIST_ARG) > rtl_filelist.f
@@ -191,26 +198,31 @@ YOSYS_READ_SRAM_LIBERTY_CMD := $(foreach lib, $(SRAM_LIBERTY), $(addprefix read_
 
 ifeq ($(SYNTH_TOOL), yosys)
 
-.PHONY: synth
-synth:
+$(NETLIST_FILE):
 	mkdir -p netlist
-	$(YOSYS) -p "read_liberty -ignore_miss_func -lib $(STDCELL_LIBERTY); $(YOSYS_READ_SRAM_LIBERTY_CMD) read_verilog_file_list $(RTL_FLIST_ARG); synth -top $(RTL_TOP_NAME) -flatten; dfflibmap -liberty $(STDCELL_LIBERTY); abc -liberty $(STDCELL_LIBERTY); hilomap -singleton -hicell $(HI_CELL_NAME_AND_PORT) -locell $(LO_CELL_NAME_AND_PORT); clean; stat; write_verilog -nohex -nodec netlist/$(RTL_TOP_NAME).netlist.v"
+	$(YOSYS) -p "read_liberty -ignore_miss_func -lib $(STDCELL_LIBERTY); $(YOSYS_READ_SRAM_LIBERTY_CMD) read_verilog_file_list $(RTL_FLIST_ARG); synth -top $(RTL_TOP_NAME) -flatten; dfflibmap -liberty $(STDCELL_LIBERTY); abc -liberty $(STDCELL_LIBERTY); hilomap -singleton -hicell $(HI_CELL_NAME_AND_PORT) -locell $(LO_CELL_NAME_AND_PORT); clean; stat; write_verilog -nohex -nodec $(NETLIST_FILE)"
 
 else ifeq ($(SYNTH_TOOL), yosys-surelog)
 
-.PHONY: synth
-synth: rtl_filelist.f
+$(NETLIST_FILE): rtl_filelist.f
 	mkdir -p netlist
-	$(YOSYS) -m systemverilog -p "read_liberty -ignore_miss_func -lib $(STDCELL_LIBERTY); $(YOSYS_READ_SRAM_LIBERTY_CMD) read_systemverilog -f rtl_filelist.f; synth -top $(RTL_TOP_NAME) -flatten; dfflibmap -liberty $(STDCELL_LIBERTY); abc -liberty $(STDCELL_LIBERTY); hilomap -singleton -hicell $(HI_CELL_NAME_AND_PORT) -locell $(LO_CELL_NAME_AND_PORT); clean; stat; write_verilog -nohex -nodec netlist/$(RTL_TOP_NAME).netlist.v"
+	$(YOSYS) -m systemverilog -p "read_liberty -ignore_miss_func -lib $(STDCELL_LIBERTY); $(YOSYS_READ_SRAM_LIBERTY_CMD) read_systemverilog -f rtl_filelist.f; synth -top $(RTL_TOP_NAME) -flatten; dfflibmap -liberty $(STDCELL_LIBERTY); abc -liberty $(STDCELL_LIBERTY); hilomap -singleton -hicell $(HI_CELL_NAME_AND_PORT) -locell $(LO_CELL_NAME_AND_PORT); clean; stat; write_verilog -nohex -nodec $(NETLIST_FILE)"
 
 else ifeq ($(SYNTH_TOOL), yosys-slang)
 
-.PHONY: synth
-synth:
+$(NETLIST_FILE):
 	mkdir -p netlist
-	$(YOSYS) -m slang -p "read_liberty -ignore_miss_func -lib $(STDCELL_LIBERTY); $(YOSYS_READ_SRAM_LIBERTY_CMD) read_slang -Weverything --top $(RTL_TOP_NAME) +define+SYNTHESIS $(RTL_FLIST_ARG); synth -top $(RTL_TOP_NAME) -flatten; dfflibmap -liberty $(STDCELL_LIBERTY); abc -liberty $(STDCELL_LIBERTY); hilomap -singleton -hicell $(HI_CELL_NAME_AND_PORT) -locell $(LO_CELL_NAME_AND_PORT); clean; stat; write_verilog -nohex -nodec netlist/$(RTL_TOP_NAME).netlist.v"
+	$(YOSYS) -m slang -p "read_liberty -ignore_miss_func -lib $(STDCELL_LIBERTY); $(YOSYS_READ_SRAM_LIBERTY_CMD) read_slang -Weverything --top $(RTL_TOP_NAME) +define+SYNTHESIS $(RTL_FLIST_ARG); synth -top $(RTL_TOP_NAME) -flatten; dfflibmap -liberty $(STDCELL_LIBERTY); abc -liberty $(STDCELL_LIBERTY); hilomap -singleton -hicell $(HI_CELL_NAME_AND_PORT) -locell $(LO_CELL_NAME_AND_PORT); clean; stat; write_verilog -nohex -nodec $(NETLIST_FILE)"
 
 endif
+
+.PHONY: synth
+synth: $(NETLIST_FILE)
+
+# Zero-wire-load model static timing analysis
+.PHONY: sta-zwl
+sta-zwl: $(NETLIST_FILE)
+	sta -no_init -exit ip/flows/opensta/opensta.tcl
 
 # Micro-Architecture Specification documentation
 deliverable/micro-architecture-specification.pdf:
