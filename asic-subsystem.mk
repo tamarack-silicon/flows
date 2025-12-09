@@ -203,7 +203,7 @@ YOSYS_READ_SRAM_LIBERTY_CMD := $(foreach lib, $(SRAM_LIBERTY), $(addprefix read_
 
 $(NETLIST_FILE):
 	mkdir -p netlist
-	$(YOSYS) -m slang -p "read_liberty -ignore_miss_func -lib $(STDCELL_LIBERTY); $(YOSYS_READ_SRAM_LIBERTY_CMD) read_slang -Weverything --top $(RTL_TOP_NAME) +define+SYNTHESIS $(RTL_FLIST_ARG); synth -top $(RTL_TOP_NAME) -flatten; dfflibmap -liberty $(STDCELL_LIBERTY); abc -liberty $(STDCELL_LIBERTY); hilomap -singleton -hicell $(HI_CELL_NAME_AND_PORT) -locell $(LO_CELL_NAME_AND_PORT); clean; stat; write_verilog -nohex -nodec $(NETLIST_FILE)"
+	$(YOSYS) -m slang -p "read_liberty -ignore_miss_func -lib $(STDCELL_LIBERTY); $(YOSYS_READ_SRAM_LIBERTY_CMD) read_slang -Weverything --top $(RTL_TOP_NAME) +define+SYNTHESIS $(RTL_FLIST_ARG); synth -top $(RTL_TOP_NAME) -flatten; dfflibmap -liberty $(STDCELL_LIBERTY); abc -liberty $(STDCELL_LIBERTY); hilomap -singleton -hicell $(HI_CELL_NAME_AND_PORT) -locell $(LO_CELL_NAME_AND_PORT); clean; autoname; stat; write_verilog -nohex -nodec $(NETLIST_FILE)"
 
 .PHONY: synth
 synth: $(NETLIST_FILE)
