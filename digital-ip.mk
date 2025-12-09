@@ -7,12 +7,6 @@ PEAKRDL := peakrdl
 # Linter options: verilator, slang
 LINTER := verilator
 
-# Simulator options: verilator
-SIMULATOR := verilator
-
-# Synthesis Tool options: yosys, yosys-surelog, yosys-slang
-SYNTH_TOOL := yosys
-
 VL_COMMON_ARGS :=
 SLANG_COMMON_ARGS :=
 
@@ -77,30 +71,30 @@ ifeq ($(LINTER), verilator)
 # Lint with Verilator
 .PHONY: lint-rtl
 lint-rtl:
-	$(VERILATOR) --lint-only $(VL_RTL_LINT_ARGS) lint/waiver.vlt $(RTL_FLIST_ARG) --top $(RTL_TOP_NAME)
+	$(VERILATOR) --lint-only $(VL_RTL_LINT_ARGS) lint/waiver.vlt $(TECH_BEHAV_VERILOG) $(RTL_FLIST_ARG) --top $(RTL_TOP_NAME)
 
 .PHONY: lint-tb
 lint-tb:
-	$(VERILATOR) --lint-only $(VL_TB_LINT_ARGS) lint/waiver.vlt $(RTL_FLIST_ARG) $(TB_FILE) --top $(TB_NAME)
+	$(VERILATOR) --lint-only $(VL_TB_LINT_ARGS) lint/waiver.vlt $(TECH_BEHAV_VERILOG) $(RTL_FLIST_ARG) $(TB_FILE) --top $(TB_NAME)
 
 .PHONY: lint-verif
 lint-verif:
-	$(VERILATOR) --lint-only $(VL_VERIF_LINT_ARGS) lint/waiver.vlt $(UVM_PKG_ARGS) $(RTL_FLIST_ARG) $(VERIF_FLIST_ARG) --top $(VERIF_TOP_NAME)
+	$(VERILATOR) --lint-only $(VL_VERIF_LINT_ARGS) lint/waiver.vlt $(TECH_BEHAV_VERILOG) $(UVM_PKG_ARGS) $(RTL_FLIST_ARG) $(VERIF_FLIST_ARG) --top $(VERIF_TOP_NAME)
 
 else ifeq ($(LINTER), slang)
 
 # Lint with Slang
 .PHONY: lint-rtl
 lint-rtl:
-	$(SLANG) $(SLANG_RTL_LINT_ARGS) $(RTL_FLIST_ARG) --top $(RTL_TOP_NAME)
+	$(SLANG) $(SLANG_RTL_LINT_ARGS) $(TECH_BEHAV_VERILOG) $(RTL_FLIST_ARG) --top $(RTL_TOP_NAME)
 
 .PHONY: lint-tb
 lint-tb:
-	$(SLANG) $(SLANG_TB_LINT_ARGS) $(RTL_FLIST_ARG) $(TB_FILE) --top $(TB_NAME)
+	$(SLANG) $(SLANG_TB_LINT_ARGS) $(TECH_BEHAV_VERILOG) $(RTL_FLIST_ARG) $(TB_FILE) --top $(TB_NAME)
 
 .PHONY: lint-verif
 lint-verif:
-	$(SLANG) $(SLANG_VERIF_LINT_ARGS) $(UVM_PKG_ARGS) $(RTL_FLIST_ARG) $(VERIF_FLIST_ARG) --top $(VERIF_TOP_NAME)
+	$(SLANG) $(SLANG_VERIF_LINT_ARGS) $(TECH_BEHAV_VERILOG) $(UVM_PKG_ARGS) $(RTL_FLIST_ARG) $(VERIF_FLIST_ARG) --top $(VERIF_TOP_NAME)
 
 endif
 
@@ -114,13 +108,11 @@ cdc:
 rdc:
 	echo "Reset domain crossing checking not available"
 
-ifeq ($(SIMULATOR), verilator)
-
 # Simple SystemVerilog Testbench Simulation
 # Build simulation executable
 sim/$(TB_NAME)_obj_dir/V$(TB_NAME):
 	mkdir -p sim
-	$(VERILATOR) --cc --exe --main $(VL_TB_SIM_ARGS) --top $(TB_NAME) $(RTL_FLIST_ARG) $(TB_FILE) -Mdir sim/$(TB_NAME)_obj_dir
+	$(VERILATOR) --cc --exe --main $(VL_TB_SIM_ARGS) --top $(TB_NAME) $(TECH_BEHAV_VERILOG) $(RTL_FLIST_ARG) $(TB_FILE) -Mdir sim/$(TB_NAME)_obj_dir
 	$(MAKE) -C sim/$(TB_NAME)_obj_dir -f V$(TB_NAME).mk
 
 .PHONY: build-tb-sim
@@ -134,7 +126,7 @@ run-tb-sim: sim/$(TB_NAME)_obj_dir/V$(TB_NAME)
 # Build simulation executable
 sim/verif_obj_dir/V$(VERIF_TOP_NAME):
 	mkdir -p sim
-	$(VERILATOR) --cc --exe --main $(VL_VERIF_SIM_ARGS) --top $(VERIF_TOP_NAME) $(UVM_PKG_ARGS) $(RTL_FLIST_ARG) $(VERIF_FLIST_ARG) -Mdir sim/verif_obj_dir
+	$(VERILATOR) --cc --exe --main $(VL_VERIF_SIM_ARGS) --top $(VERIF_TOP_NAME) $(TECH_BEHAV_VERILOG) $(UVM_PKG_ARGS) $(RTL_FLIST_ARG) $(VERIF_FLIST_ARG) -Mdir sim/verif_obj_dir
 	$(MAKE) -C sim/verif_obj_dir -f V$(VERIF_TOP_NAME).mk
 
 .PHONY: build-verif-sim
@@ -150,8 +142,6 @@ run-verif-sim: sim/verif_obj_dir/V$(VERIF_TOP_NAME)
 run-test: sim/verif_obj_dir/V$(VERIF_TOP_NAME)
 	mkdir -p sim/$(TEST)
 	cd sim ; ./verif_obj_dir/V$(VERIF_TOP_NAME) +UVM_TESTNAME=$(TEST) $(SIM_ARGS)
-
-endif
 
 # Formal property verification
 .PHONY: formal
@@ -186,14 +176,6 @@ csr-ipxact:
 csr-c-header:
 	mkdir -p deliverable
 	$(PEAKRDL) c-header csr/$(CSR_BLOCK_NAME).rdl -o deliverable/$(CSR_BLOCK_NAME).h --peakrdl-cfg ip/flows/peakrdl/peakrdl.toml
-
-# Synthesis
-$(NETLIST_FILE):
-	mkdir -p netlist
-	$(YOSYS) -m slang -p "read_slang -Weverything --top $(RTL_TOP_NAME) +define+SYNTHESIS $(RTL_FLIST_ARG); synth -top $(RTL_TOP_NAME) -flatten; write_verilog netlist/$(RTL_TOP_NAME).netlist.v"
-
-.PHONY: synth
-synth: $(NETLIST_FILE)
 
 # Micro-Architecture Specification documentation
 deliverable/micro-architecture-specification.pdf:
