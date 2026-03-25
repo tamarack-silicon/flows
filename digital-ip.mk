@@ -58,7 +58,6 @@ VERIF_FLIST_ARG := $(VERIF_FLIST_IP_ARG) $(VERIF_FLIST_REPO_ARG) -F verif/source
 
 # Testbench file
 TB_FILE := tb/$(TB_NAME).sv
-NETLIST_FILE := netlist/$(RTL_TOP_NAME).netlist.v
 
 rtl_filelist.f:
 	$(dir $(lastword $(MAKEFILE_LIST)))/scripts/filelist.py $(RTL_FLIST_ARG) > rtl_filelist.f
@@ -153,7 +152,7 @@ formal:
 
 # CSR
 .PHONY: csr
-csr: csr-rtl csr-ral csr-ipxact csr-c-header
+csr: csr-rtl csr-ral
 
 # Generate CSR block RTL
 .PHONY: csr-rtl
@@ -165,29 +164,13 @@ csr-rtl:
 csr-ral:
 	$(PEAKRDL) uvm csr/$(CSR_BLOCK_NAME).rdl -o verif/$(CSR_BLOCK_NAME)_ral_pkg.sv --peakrdl-cfg ip/flows/peakrdl/peakrdl.toml
 
-# Generate CSR IP-XACT file
-.PHONY: csr-ipxact
-csr-ipxact:
-	mkdir -p deliverable
-	$(PEAKRDL) ip-xact csr/$(CSR_BLOCK_NAME).rdl -o deliverable/$(CSR_BLOCK_NAME).xml --peakrdl-cfg ip/flows/peakrdl/peakrdl.toml
-
-# Generate CSR C header file
-.PHONY: csr-c-header
-csr-c-header:
-	mkdir -p deliverable
-	$(PEAKRDL) c-header csr/$(CSR_BLOCK_NAME).rdl -o deliverable/$(CSR_BLOCK_NAME).h --peakrdl-cfg ip/flows/peakrdl/peakrdl.toml
-
-# Micro-Architecture Specification documentation
-deliverable/micro-architecture-specification.pdf:
-	$(MAKE) -C doc/micro_architecture_specification latexpdf
-	cp doc/micro_architecture_specification/_build/latex/*.pdf deliverable/micro-architecture-specification.pdf
-
-# Generate IP deliverables
-.PHONY: deliverable
-deliverable: csr-ipxact csr-c-header deliverable/micro-architecture-specification.pdf
+# Documentation
+.PHONY: docs
+docs:
+	sphinx-build -M latexpdf docs/micro_architecture_specification docs/micro_architecture_specification/_build
+	sphinx-build -M html docs/micro_architecture_specification docs/micro_architecture_specification/_build
 
 # Clean
 .PHONY: clean
 clean:
-	$(MAKE) -C doc/micro_architecture_specification clean
-	rm -rf sim/* netlist/* deliverable/* *.f abc.history symbiyosys*
+	rm -rf sim/* dataout/* docs/micro_architecture_specification/_build *.f abc.history symbiyosys*
