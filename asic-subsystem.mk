@@ -4,17 +4,17 @@ include ip/flows/tech/$(ASIC_TECH).mk
 # Technology-specific behavioural verilog
 TECH_BEHAV_VERILOG := $(STDCELL_BEHAV_VERILOG) $(SRAM_BEHAV_VERILOG)
 
+include ip/flows/digital-ip.mk
+
+export RTL_TOP_NAME
+export RTL_FLIST_ARG
 export STDCELL_LIBERTY
 export SRAM_LIBERTY
 export TECH_LEF
 export STDCELL_LEF
 export SRAM_LEF
-export RTL_TOP_NAME
-export RTL_FLIST_ARG
 export HI_CELL_NAME_AND_PORT
 export LO_CELL_NAME_AND_PORT
-
-include ip/flows/digital-ip.mk
 
 dataout/synth/$(RTL_TOP_NAME).v:
 	mkdir -p dataout/synth
