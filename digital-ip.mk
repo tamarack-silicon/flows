@@ -51,8 +51,8 @@ RTL_FLIST_REPO_ARG := $(foreach ip, $(RTL_REPO_DEP), $(addprefix -F ../, $(addsu
 RTL_FLIST_ARG := $(RTL_FLIST_IP_ARG) $(RTL_FLIST_REPO_ARG) -F rtl/source.f
 
 # Verification file list
-VERIF_FLIST_IP_ARG := $(foreach ip, $(VERIF_IP_DEP), $(addprefix -F ip/, $(addsuffix /verif/source.f, $(ip))))
-VERIF_FLIST_REPO_ARG := $(foreach ip, $(VERIF_REPO_DEP), $(addprefix -F ../, $(addsuffix /verif/source.f, $(ip))))
+VERIF_FLIST_IP_ARG := $(foreach ip, $(VERIF_IP_DEP), $(addprefix -F ip/, $(addsuffix /src/source.f, $(ip))))
+VERIF_FLIST_REPO_ARG := $(foreach ip, $(VERIF_REPO_DEP), $(addprefix -F ../, $(addsuffix /src/source.f, $(ip))))
 
 VERIF_FLIST_ARG := $(VERIF_FLIST_IP_ARG) $(VERIF_FLIST_REPO_ARG) -F verif/source.f
 
@@ -119,7 +119,8 @@ build-tb-sim: sim/$(TB_NAME)_obj_dir/V$(TB_NAME)
 
 .PHONY: run-tb-sim
 run-tb-sim: sim/$(TB_NAME)_obj_dir/V$(TB_NAME)
-	cd sim ; ./$(TB_NAME)_obj_dir/V$(TB_NAME) $(SIM_ARGS)
+	mkdir -p sim/$(TB_NAME)
+	cd sim/$(TB_NAME) ; ../$(TB_NAME)_obj_dir/V$(TB_NAME) $(SIM_ARGS)
 
 # UVM Verification Testbench Simulation
 # Build simulation executable
@@ -131,16 +132,11 @@ sim/verif_obj_dir/V$(VERIF_TOP_NAME):
 .PHONY: build-verif-sim
 build-verif-sim: sim/verif_obj_dir/V$(VERIF_TOP_NAME)
 
-# Run simulation
-.PHONY: run-verif-sim
-run-verif-sim: sim/verif_obj_dir/V$(VERIF_TOP_NAME)
-	cd sim ; ./verif_obj_dir/V$(VERIF_TOP_NAME) $(SIM_ARGS)
-
 # Run UVM test
 .PHONY: run-test
 run-test: sim/verif_obj_dir/V$(VERIF_TOP_NAME)
 	mkdir -p sim/$(TEST)
-	cd sim ; ./verif_obj_dir/V$(VERIF_TOP_NAME) +UVM_TESTNAME=$(TEST) $(SIM_ARGS)
+	cd sim/$(TEST) ; ../verif_obj_dir/V$(VERIF_TOP_NAME) +UVM_TESTNAME=$(TEST) $(SIM_ARGS)
 
 # Formal property verification
 .PHONY: formal
