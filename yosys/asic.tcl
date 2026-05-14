@@ -29,8 +29,8 @@ foreach lib $stdcell_liberty {
 	abc -liberty $lib
 }
 
-puts ">> hilomap -singleton -hicell $::env(HI_CELL_NAME_AND_PORT) -locell $::env(LO_CELL_NAME_AND_PORT)"
-hilomap -singleton -hicell {*}$::env(HI_CELL_NAME_AND_PORT) -locell {*}$::env(LO_CELL_NAME_AND_PORT)
+puts ">> hilomap -singleton -hicell $::env(HI_CELL_NAME) $::env(HI_CELL_PORT) -locell $::env(LO_CELL_NAME) $::env(LO_CELL_PORT)"
+hilomap -singleton -hicell $::env(HI_CELL_NAME) $::env(HI_CELL_PORT) -locell $::env(LO_CELL_NAME) $::env(LO_CELL_PORT)
 
 puts ">> clean"
 clean
