@@ -4,6 +4,80 @@ import sys
 import os
 import subprocess
 
+def create_verification_ip(project_dir):
+	print('Enter VIP package name(for example tamarack_gpio_agent_pkg): ', end='')
+	package_name = input()
+
+	print('Enter UVM verification environment testbench top name(for example ' + project_dir + '_tests_top): ', end='')
+	verif_top_name = input()
+
+	print('Enter UVM Default test name(for example ' + project_dir + '_base_test): ', end='')
+	test = input()
+
+	init_git = False
+	print('Enter \'y\' to initialize git: ', end='')
+	if(input() == 'y'):
+		init_git = True
+
+	os.mkdir(project_dir)
+	os.mkdir(project_dir + '/doc')
+	os.mkdir(project_dir + '/ip')
+	os.mkdir(project_dir + '/lint')
+	os.mkdir(project_dir + '/src')
+	os.mkdir(project_dir + '/tests')
+
+	# Lint Waiver
+	with open(project_dir + '/lint/waiver.vlt', 'w', encoding='utf-8') as waiver_vlt:
+		waiver_vlt.write('`verilator_config\n\n')
+		waiver_vlt.write('lint_off -file "ip/*"\n')
+
+	# Source directory
+	with open(project_dir + '/src/source.f', 'w', encoding='utf-8') as src_sourcef:
+		src_sourcef.write("+incdir+.\n\n")
+		src_sourcef.write(package_name + '.sv\n')
+
+	with open(project_dir + '/src/' + package_name + '.sv', 'w', encoding='utf-8') as src_package_sv:
+		src_package_sv.write('package ' + package_name + ';\n')
+		src_package_sv.write('endpackage\n');
+
+	# Tests directory
+	with open(project_dir + '/tests/source.f', 'w', encoding='utf-8') as tests_sourcef:
+		tests_sourcef.write(verif_top_name + '.sv\n')
+
+	with open(project_dir + '/tests/' + verif_top_name + '.sv', 'w', encoding='utf-8') as verif_top_sv:
+		verif_top_sv.write('module ' + verif_top_name + ';\n')
+		verif_top_sv.write('endmodule\n');
+
+	# Makefile
+	with open(project_dir + '/Makefile', 'w', encoding='utf-8') as makefile_file:
+		makefile_file.write('# Verification IP dependency in \'ip\' folder\n')
+		makefile_file.write('IP_DEP := \n\n')
+		makefile_file.write('# Verification IP dependency in same folder as current ip\n')
+		makefile_file.write('REPO_DEP := \n\n')
+		makefile_file.write('# Testbench top level module name\n')
+		makefile_file.write('TESTS_TOP_NAME := ' + verif_top_name + '\n\n')
+		makefile_file.write('# Default UVM test name\n')
+		makefile_file.write('TEST := ' + test + '\n\n')
+		makefile_file.write('include ip/flows/verification-ip.mk\n')
+
+	if(init_git):
+		with open(project_dir + '/.gitignore', 'w', encoding='utf-8') as gitignore_file:
+			gitignore_file.write('# Temporary file lists\n')
+			gitignore_file.write('vip_filelist.f\n')
+			gitignore_file.write('# Simulation flow temporary files\n')
+			gitignore_file.write('sim\n')
+
+		git_proc = subprocess.Popen(['git', 'init'], cwd=project_dir)
+		git_proc.wait()
+
+		git_proc = subprocess.Popen(['git', 'submodule', 'add', 'https://github.com/tamarack-silicon/flows.git'], cwd=(project_dir + '/ip'))
+		git_proc.wait()
+
+		git_proc = subprocess.Popen(['git', 'submodule', 'add', 'https://github.com/accellera-official/uvm-core.git', 'uvm'], cwd=(project_dir + '/ip'))
+		git_proc.wait()
+
+	exit(0)
+
 def main() -> int:
 	if(len(sys.argv) != 2):
 		print('Usage: create-tamarack-project.py type project_dir')
@@ -13,6 +87,9 @@ def main() -> int:
 	if(os.path.exists(project_dir)):
 		print(project_dir + ' already exists')
 		return 1
+
+	if(project_type == "verification-ip"):
+		create_verification_ip(project_dir)
 
 	print('Enter RTL top-level module name: ', end='')
 	rtl_top_name = input()
